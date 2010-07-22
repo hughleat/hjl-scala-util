@@ -1,0 +1,65 @@
+val reps = 15
+
+def functions( n : Int ) : String = {
+    val range = 1 to n
+    val types = range.map( "A" + _ ).mkString( ", " )
+    val params = range.map( "a%1$d : Iterable[ A%1$d ]" format _).mkString( ", " )
+    val inames = range.map( "i" + _ ).mkString( ", " )
+    val aiters = range.map( "a%d.iterator" format _ ).mkString( ", " )
+    val andNexts = range.map( "i%d.hasNext" format _ ).mkString( " && " )
+    val orNexts = range.map( "i%d.hasNext" format _ ).mkString( " || " )
+    val nexts = range.map( "i%d.next" format _ ).mkString( ", " )
+    val defaults = range.map( "_a%1$d : A%1$d" format _ ).mkString( ", " )
+    val nextOrElses = range.map( "if( i%1$d.hasNext ) i%1$d.next else _a%1$d" format _ ).mkString( ", " )
+    val fnTemplate = """
+    def combine[ %1$s, T ]( %2$s )( f : ( %1$s ) => T ) : Iterable[ T ] = {
+        val builder = a1.genericBuilder[ T ]
+        val ( %3$s ) = ( %4$s )
+        while( %5$s ) {
+            builder += f( %6$s ) 
+        }
+        builder.result
+    }
+    def combineWithIndex[ %1$s, T ]( %2$s )( f : ( %1$s, Int ) => T ) : Iterable[ T ] = {
+        val builder = a1.genericBuilder[ T ]
+        val ( %3$s ) = ( %4$s )
+        var i = 0
+        while( %5$s ) {
+            builder += f( %6$s, i )
+            i += 1 
+        }
+        builder.result
+    }
+    def combineAll[ %1$s, T ]( %2$s )( %7$s )( f : ( %1$s ) => T ) : Iterable[ T ] = {
+        val builder = a1.genericBuilder[ T ]
+        val ( %3$s ) = ( %4$s )
+        while( %8$s ) {
+            builder += f( %9$s ) 
+        }
+        builder.result
+    }
+    def combineAllWithIndex[ %1$s, T ]( %2$s )( %7$s )( f : ( %1$s, Int ) => T ) : Iterable[ T ] = {
+        val builder = a1.genericBuilder[ T ]
+        val ( %3$s ) = ( %4$s )
+        var i = 0
+        while( %8$s ) {
+            builder += f( %9$s, i )
+            i += 1 
+        }
+        builder.result
+    }"""
+    fnTemplate.format( types, params, inames, aiters, andNexts, nexts, defaults, orNexts, nextOrElses )
+}
+
+val fileTemplate = """
+// This file has been automatically produced by Elementwise.script.
+package com.hjl.util
+
+object Elementwise {
+%s
+}
+"""
+
+println( fileTemplate.format(( 2 until reps ).map( functions( _ )).mkString( "\n" )))
+
+
